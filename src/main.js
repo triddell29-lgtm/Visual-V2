@@ -232,10 +232,98 @@ room.add(buildings)
 
 const seismic = { intensity: 0.12, speed: 2.4, manual: false }
 
+function createEarthTexture() {
+  const textureCanvas = document.createElement('canvas')
+  textureCanvas.width = 2048
+  textureCanvas.height = 1024
+  const context = textureCanvas.getContext('2d')
+  const width = textureCanvas.width
+  const height = textureCanvas.height
+  const project = ([longitude, latitude]) => [(longitude + 180) / 360 * width, (90 - latitude) / 180 * height]
+  const continent = (points) => {
+    context.beginPath()
+    points.map(project).forEach(([x, y], index) => index ? context.lineTo(x, y) : context.moveTo(x, y))
+    context.closePath()
+    context.fill()
+    context.stroke()
+  }
+
+  const oceanGradient = context.createLinearGradient(0, 0, 0, height)
+  oceanGradient.addColorStop(0, '#071923')
+  oceanGradient.addColorStop(.5, '#0a2930')
+  oceanGradient.addColorStop(1, '#041016')
+  context.fillStyle = oceanGradient
+  context.fillRect(0, 0, width, height)
+
+  context.strokeStyle = 'rgba(113, 191, 184, .14)'
+  context.lineWidth = 2
+  for (let longitude = -150; longitude <= 150; longitude += 30) {
+    const [x] = project([longitude, 0])
+    context.beginPath()
+    context.moveTo(x, 0)
+    context.lineTo(x, height)
+    context.stroke()
+  }
+  for (let latitude = -60; latitude <= 60; latitude += 30) {
+    const [, y] = project([0, latitude])
+    context.beginPath()
+    context.moveTo(0, y)
+    context.lineTo(width, y)
+    context.stroke()
+  }
+
+  context.fillStyle = '#617d6e'
+  context.strokeStyle = '#9db58a'
+  context.lineWidth = 3
+  continent([[-168, 63], [-145, 71], [-125, 65], [-104, 54], [-91, 49], [-82, 27], [-98, 15], [-117, 22], [-130, 39], [-153, 47]])
+  continent([[-81, 12], [-66, 8], [-58, -10], [-62, -32], [-72, -55], [-81, -35], [-87, -8]])
+  continent([[-12, 36], [8, 42], [31, 35], [47, 22], [39, 5], [20, -7], [4, 5], [-11, 20]])
+  continent([[48, 28], [75, 39], [108, 55], [143, 48], [154, 25], [130, 8], [112, 17], [86, 7], [62, 12]])
+  continent([[113, -12], [153, -17], [145, -39], [119, -36]])
+  continent([[-58, -65], [-18, -64], [26, -70], [45, -78], [-40, -80]])
+
+  context.fillStyle = 'rgba(238, 246, 239, .82)'
+  context.strokeStyle = 'rgba(255, 255, 255, .76)'
+  context.lineWidth = 2
+  continent([[-180, 90], [180, 90], [180, 78], [145, 80], [110, 78], [72, 81], [32, 78], [-5, 80], [-46, 78], [-92, 80], [-132, 78], [-180, 80]])
+  continent([[-180, -90], [180, -90], [180, -78], [144, -80], [103, -78], [61, -81], [20, -78], [-21, -82], [-64, -78], [-105, -80], [-145, -78], [-180, -80]])
+
+  const faultLines = [
+    [[-150, 62], [-128, 38], [-112, 10], [-82, -20], [-72, -48]],
+    [[-82, 12], [-72, 2], [-62, -14], [-56, -34], [-50, -54]],
+    [[-42, 64], [-29, 42], [-18, 24], [-8, 4], [8, -17], [24, -38]],
+    [[58, 32], [75, 18], [91, 7], [108, -5], [133, -21]],
+    [[-178, -4], [-151, -18], [-126, -30], [-100, -42]],
+    [[-8, 52], [20, 48], [45, 43], [72, 41], [101, 36], [132, 28]],
+  ]
+  context.strokeStyle = '#f0bd70'
+  context.shadowColor = '#e8674f'
+  context.shadowBlur = 14
+  context.lineWidth = 5
+  faultLines.forEach((line) => {
+    context.beginPath()
+    line.map(project).forEach(([x, y], index) => index ? context.lineTo(x, y) : context.moveTo(x, y))
+    context.stroke()
+  })
+  context.shadowBlur = 0
+  context.strokeStyle = 'rgba(255, 222, 143, .9)'
+  context.lineWidth = 2
+  faultLines.forEach((line) => {
+    context.beginPath()
+    line.map(project).forEach(([x, y], index) => index ? context.lineTo(x, y) : context.moveTo(x, y))
+    context.stroke()
+  })
+
+  const texture = new THREE.CanvasTexture(textureCanvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
+}
+
 const orbMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0x8e9695,
-  metalness: 1,
-  roughness: 0.075,
+  color: 0x9aa59b,
+  map: createEarthTexture(),
+  metalness: 0.72,
+  roughness: 0.22,
   clearcoat: 1,
   clearcoatRoughness: 0.06,
   envMapIntensity: 2.5,
@@ -361,21 +449,6 @@ readEarthquakes()
 window.setInterval(readEarthquakes, 60000)
 
 // --- Ring, halo, dust, lighting ---
-
-const ringMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0xb9c4c2,
-  metalness: 1,
-  roughness: 0.14,
-  clearcoat: 1,
-  clearcoatRoughness: 0.08,
-  envMapIntensity: 1.8,
-  transparent: true,
-  opacity: 0.68,
-})
-const ring = new THREE.Mesh(new THREE.TorusGeometry(2.03, 0.022, 16, 160), ringMaterial)
-ring.rotation.set(Math.PI / 2.7, 0.15, -0.28)
-ring.position.y = -0.12
-orb.add(ring)
 
 const halo = new THREE.Mesh(
   new THREE.RingGeometry(2.22, 2.225, 128),
@@ -551,9 +624,6 @@ function animate(time) {
       0.035,
     )
   }
-  ring.rotation.z = -0.28 + time * 0.00035
-  ring.scale.setScalar(1 + Math.sin(time * 0.0022) * 0.008 + seismic.intensity * 0.035)
-  ringMaterial.opacity = 0.62 + Math.sin(time * 0.0028) * 0.06 + seismic.intensity * 0.12
   renderer.render(scene, camera)
   requestAnimationFrame(animate)
 }
