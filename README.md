@@ -34,4 +34,3 @@ Build with `npm run build`.
 
 GROUND STATE / INTERACTIVE SYSTEM V1 / 2026  
 Built by Tate.
-# Visual-V2
