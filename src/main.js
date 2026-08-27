@@ -12,7 +12,7 @@ document.querySelector('#app').innerHTML = `
     <section class="page-intro" id="orbital-study">
       <p>INTERACTIVE SYSTEM / V1</p>
       <h1>GROUND<br><em>STATE</em></h1>
-      <p class="intro-description">An interactive system translating live earthquake activity into movement and deformation. The system responds to seismic activity and the person interacting with it.</p>
+      <p class="intro-description">An interactive system translating live earthquake activity into movement and deformation. Two inputs drive it: live seismic data (API or manual override) shapes the ripple, and direct dragging sets the orb's orientation.</p>
       <p class="invitation">The ground is never completely still.</p>
       <p class="intro-description">The orb is modeled after the globe itself, with the yellow lines tracing the planet's major fault lines.</p>
     </section>
@@ -33,38 +33,39 @@ document.querySelector('#app').innerHTML = `
       <span class="experience-status" id="experience-status">Use recent earthquakes as they arrive.</span>
     </section>
 
-    <section class="seismic-controls" aria-label="Seismic controls">
-      <button class="mode-toggle" id="mode-toggle" type="button">API</button>
-      <label class="intensity-control" for="intensity-slider">
-        <span>CALM</span>
-        <input id="intensity-slider" type="range" min="0" max="100" value="35" disabled>
-        <span>MAJOR</span>
-      </label>
+    <section class="seismic-controls" aria-label="Seismic input source">
+      <p class="seismic-controls-label">SEISMIC INPUT / SOURCE</p>
+      <div class="seismic-controls-row">
+        <button class="mode-toggle" id="mode-toggle" type="button">API</button>
+        <label class="intensity-control" for="intensity-slider">
+          <span>CALM</span>
+          <input id="intensity-slider" type="range" min="0" max="100" value="35" disabled>
+          <span>MAJOR</span>
+        </label>
+      </div>
+      <p class="api-note">API draws live magnitude and recency from the <a href="https://earthquake.usgs.gov/earthquakes/" target="_blank" rel="noreferrer">USGS Earthquake Hazards Program</a>. MANUAL overrides that same channel with the slider — one seismic input, two sources.</p>
     </section>
-
-    <p class="api-note">This orb responds to live earthquake activity from the <a href="https://earthquake.usgs.gov/earthquakes/" target="_blank" rel="noreferrer">USGS Earthquake Hazards Program</a>.</p>
 
     <section class="info-grid" id="about">
       <article class="info-block rules">
         <p class="section-label">01 / RULES</p>
         <h2>System behavior</h2>
         <ol>
-          <li>Earthquake activity changes the intensity of movement.</li>
-          <li>Recent and stronger events create deeper, faster ripples.</li>
+          <li>Two inputs drive the system: seismic input and direct interaction.</li>
+          <li>Seismic input (API or manual) sets ripple depth and speed; recent, stronger activity ripples deeper and faster.</li>
+          <li>Interaction (drag) sets the orb's orientation only, never its intensity.</li>
           <li>The system gradually returns toward a resting state.</li>
-          <li>Dragging the orb changes its orientation without moving its position.</li>
         </ol>
       </article>
 
       <article class="info-block controls">
         <p class="section-label">02 / CONTROLS</p>
         <h2>Stay with the surface</h2>
-        <p class="gesture-label">GESTURE / ROTATE</p>
+        <p class="interaction-label">INTERACTION / ROTATE</p>
         <dl>
           <dt>Hold + drag</dt><dd>Across the surface.</dd>
           <dt>Horizontal</dt><dd>Changes orientation.</dd>
           <dt>Vertical</dt><dd>Changes viewing angle.</dd>
-          <dt>Manual</dt><dd>Switch modes and pull the slider toward major.</dd>
         </dl>
       </article>
 
@@ -83,7 +84,7 @@ document.querySelector('#app').innerHTML = `
       <article class="info-block status-info">
         <p class="section-label">04 / SYSTEM STATUS</p>
         <h2><span class="status-dot"></span><span id="system-status">CALM</span></h2>
-        <p class="note-copy">Live sensors shape the surface. Manual input is available above.</p>
+        <p class="note-copy">Seismic input shapes the surface, from either the live API or the manual override above.</p>
       </article>
 
       <article class="info-block reflection">
@@ -102,13 +103,14 @@ document.querySelector('#app').innerHTML = `
         <div class="chart-heading">
           <div>
             <p class="section-label">07 / SEISMIC SCALE</p>
-            <h2>How earthquakes are categorized</h2>
+            <h2>The scale driving the orb</h2>
+            <p class="chart-live-note" id="chart-live-note">Driving the orb: --</p>
           </div>
           <span class="chart-period">LAST 24 HOURS</span>
         </div>
         <div class="quake-chart" id="quake-chart" aria-label="Earthquakes categorized by magnitude"></div>
         <div class="chart-axis">
-          <span>MICRO</span><span>MINOR</span><span>LIGHT</span><span>MODERATE</span><span>STRONG</span>
+          <span class="chart-axis-item" data-index="0">MICRO</span><span class="chart-axis-item" data-index="1">MINOR</span><span class="chart-axis-item" data-index="2">LIGHT</span><span class="chart-axis-item" data-index="3">MODERATE</span><span class="chart-axis-item" data-index="4">STRONG</span>
         </div>
       </article>
     </section>
@@ -147,9 +149,33 @@ const latestLocation = document.querySelector('#latest-location')
 const latestDepth = document.querySelector('#latest-depth')
 const systemStatus = document.querySelector('#system-status')
 const quakeChart = document.querySelector('#quake-chart')
+const chartLiveNote = document.querySelector('#chart-live-note')
+const chartAxisItems = document.querySelectorAll('.chart-axis-item')
 const feedDot = document.querySelector('#feed-dot')
 const feedStatus = document.querySelector('#feed-status')
 const feedUpdated = document.querySelector('#feed-updated')
+
+const MAGNITUDE_CATEGORIES = [
+  { label: 'Micro', min: 0, max: 2 },
+  { label: 'Minor', min: 2, max: 4 },
+  { label: 'Light', min: 4, max: 5 },
+  { label: 'Moderate', min: 5, max: 6 },
+  { label: 'Strong', min: 6, max: Infinity },
+]
+
+function updateDrivingCategory(magnitude, sourceLabel) {
+  const index = MAGNITUDE_CATEGORIES.findIndex(({ min, max }) => magnitude >= min && magnitude < max)
+  const category = MAGNITUDE_CATEGORIES[index] ?? MAGNITUDE_CATEGORIES[MAGNITUDE_CATEGORIES.length - 1]
+  quakeChart.querySelectorAll('.chart-column').forEach((column, columnIndex) => {
+    column.classList.toggle('is-driving', columnIndex === index)
+  })
+  chartAxisItems.forEach((item) => {
+    item.classList.toggle('is-driving', Number(item.dataset.index) === index)
+  })
+  if (chartLiveNote) {
+    chartLiveNote.textContent = `Driving the orb: ${category.label.toUpperCase()} (M${magnitude.toFixed(1)}) via ${sourceLabel}`
+  }
+}
 
 let recentEarthquakes = []
 let experienceTimer = null
@@ -402,14 +428,7 @@ async function readEarthquakes() {
       0,
     )
 
-    const categories = [
-      { label: 'Micro', min: 0, max: 2 },
-      { label: 'Minor', min: 2, max: 4 },
-      { label: 'Light', min: 4, max: 5 },
-      { label: 'Moderate', min: 5, max: 6 },
-      { label: 'Strong', min: 6, max: Infinity },
-    ]
-    const categoryCounts = categories.map(({ min, max }) =>
+    const categoryCounts = MAGNITUDE_CATEGORIES.map(({ min, max }) =>
       feed.features.filter((feature) => {
         const magnitude = feature.properties.mag || 0
         return magnitude >= min && magnitude < max
@@ -426,6 +445,7 @@ async function readEarthquakes() {
         `,
       )
       .join('')
+    if (!seismic.manual) updateDrivingCategory(strongestMagnitude, 'API')
 
     eventCount.textContent = feed.features.length
     strongestEvent.textContent = `M${strongestMagnitude.toFixed(1)}`
@@ -527,12 +547,14 @@ modeToggle.addEventListener('click', () => {
   modeToggle.textContent = seismic.manual ? 'MANUAL' : 'API'
   modeToggle.classList.toggle('is-manual', seismic.manual)
   intensitySlider.classList.toggle('is-active', seismic.manual)
+  if (seismic.manual) updateDrivingCategory((Number(intensitySlider.value) / 100) * 7, 'MANUAL')
   if (!seismic.manual) readEarthquakes()
 })
 intensitySlider.addEventListener('input', (event) => {
   const value = Number(event.target.value) / 100
   seismic.intensity = THREE.MathUtils.lerp(0.008, 0.16, value)
   seismic.speed = THREE.MathUtils.lerp(2.5, 14, value)
+  updateDrivingCategory(value * 7, 'MANUAL')
 })
 
 // --- "Experience an Earthquake" playback ---
@@ -545,6 +567,7 @@ function showExperienceEvent(feature) {
   intensitySlider.value = Math.round(severity * 100)
   strongestEvent.textContent = `M${magnitude.toFixed(1)}`
   experienceStatus.textContent = `${feature.properties.place || 'Recent event'} / M${magnitude.toFixed(1)}`
+  updateDrivingCategory(magnitude, 'EXPERIENCE PLAYBACK')
 }
 
 function stopExperience() {
@@ -559,6 +582,7 @@ function stopExperience() {
   experienceButton.textContent = 'Experience an Earthquake'
   experienceStatus.textContent = 'Use recent earthquakes as they arrive.'
   intensitySlider.value = 35
+  if (seismic.manual) updateDrivingCategory((35 / 100) * 7, 'MANUAL')
   if (!seismic.manual) readEarthquakes()
 }
 

@@ -256,11 +256,23 @@ h1 {
 
 .seismic-controls {
   display: flex;
-  align-items: center;
-  gap: 26px;
+  flex-direction: column;
+  gap: 14px;
   width: min(1240px, calc(100% - 44px));
   margin: 0 auto;
   padding: 18px 2px 0;
+}
+
+.seismic-controls-label {
+  color: #68756e;
+  font: 10px 'DM Mono', monospace;
+  letter-spacing: 1.5px;
+}
+
+.seismic-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 26px;
 }
 
 .mode-toggle {
@@ -303,8 +315,8 @@ h1 {
 }
 
 .api-note {
-  width: min(1240px, calc(100% - 44px));
-  margin: 28px auto 0;
+  max-width: 760px;
+  margin: 0;
   color: #68756e;
   font: 11px/1.6 'DM Mono', monospace;
   letter-spacing: .3px;
@@ -397,7 +409,7 @@ h1 {
   font: 13px/1.5 'Manrope', sans-serif;
 }
 
-.gesture-label {
+.interaction-label {
   margin: 28px 0 -13px;
   color: #c4b071;
   font: 10px 'DM Mono', monospace;
@@ -483,6 +495,13 @@ h1 {
   letter-spacing: 1px;
 }
 
+.chart-live-note {
+  margin: 12px 0 0;
+  color: #c4b071;
+  font: 11px 'DM Mono', monospace;
+  letter-spacing: .5px;
+}
+
 .quake-chart {
   display: flex;
   align-items: end;
@@ -529,6 +548,16 @@ h1 {
   opacity: .7;
 }
 
+.chart-column.is-driving .chart-bar {
+  border-color: #f0d58b;
+  background: linear-gradient(to top, #8a7638, #f1e0a4);
+  box-shadow: 0 0 24px rgba(240, 213, 139, .35);
+}
+
+.chart-column.is-driving .chart-value {
+  color: #f0d58b;
+}
+
 .chart-axis {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -537,6 +566,10 @@ h1 {
   font: 9px 'DM Mono', monospace;
   letter-spacing: 1px;
   text-align: center;
+}
+
+.chart-axis-item.is-driving {
+  color: #f0d58b;
 }
 
 .reflection-copy {
@@ -595,6 +628,10 @@ h1 {
 
   .seismic-controls {
     width: calc(100% - 28px);
+    gap: 14px;
+  }
+
+  .seismic-controls-row {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
@@ -610,8 +647,7 @@ h1 {
   }
 
   .api-note {
-    width: calc(100% - 28px);
-    margin-top: 24px;
+    max-width: none;
   }
 
   .info-grid {
