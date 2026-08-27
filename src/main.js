@@ -14,6 +14,7 @@ document.querySelector('#app').innerHTML = `
       <h1>GROUND<br><em>STATE</em></h1>
       <p class="intro-description">An interactive system translating live earthquake activity into movement and deformation. The system responds to seismic activity and the person interacting with it.</p>
       <p class="invitation">The ground is never completely still.</p>
+      <p class="intro-description">The orb is modeled after the globe itself, with the yellow lines tracing the planet's major fault lines.</p>
     </section>
 
     <section class="orb-stage" id="orb-stage" aria-label="Interactive reflective earthquake orb">
@@ -41,7 +42,7 @@ document.querySelector('#app').innerHTML = `
       </label>
     </section>
 
-    <p class="api-note">This orb responds to live earthquake activity from the <a href="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson" target="_blank" rel="noreferrer">USGS Earthquake Hazards Program API</a>.</p>
+    <p class="api-note">This orb responds to live earthquake activity from the <a href="https://earthquake.usgs.gov/earthquakes/" target="_blank" rel="noreferrer">USGS Earthquake Hazards Program</a>.</p>
 
     <section class="info-grid" id="about">
       <article class="info-block rules">
@@ -116,6 +117,18 @@ document.querySelector('#app').innerHTML = `
       <span>GROUND STATE / V1</span>
       <span>BUILT BY TATE / 2026</span>
     </footer>
+
+    <div class="claw-overlay" id="claw-overlay" aria-hidden="true">
+      <div class="claw-rope" id="claw-rope"></div>
+      <div class="claw" id="claw">
+        <span class="claw-pincer claw-pincer-left"></span>
+        <span class="claw-body"></span>
+        <span class="claw-pincer claw-pincer-right"></span>
+      </div>
+      <div class="claw-message-box" id="claw-message-box">
+        <p id="claw-message-text"></p>
+      </div>
+    </div>
   </main>
 `
 
@@ -597,6 +610,49 @@ document.addEventListener('fullscreenchange', () => {
   const isFullscreen = document.fullscreenElement === stage
   fullscreenToggle.textContent = isFullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN'
   fullscreenToggle.setAttribute('aria-label', isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen')
+})
+
+// --- Claw machine easter egg ---
+
+const clawCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'a', 'b']
+const clawMessages = ['Kenzo is so cute', 'Rocco is a bum', 'Kenzo and Rocco suck real badly']
+const clawOverlay = document.querySelector('#claw-overlay')
+const clawMessageText = document.querySelector('#claw-message-text')
+
+let clawInput = []
+let clawActive = false
+
+function setClawPhase(phase) {
+  clawOverlay.dataset.phase = phase
+}
+
+function runClawMachine() {
+  if (clawActive) return
+  clawActive = true
+  clawMessageText.textContent = clawMessages[Math.floor(Math.random() * clawMessages.length)]
+  setClawPhase('idle')
+  clawOverlay.classList.add('is-active')
+
+  requestAnimationFrame(() => requestAnimationFrame(() => setClawPhase('descend')))
+  window.setTimeout(() => setClawPhase('grab'), 1000)
+  window.setTimeout(() => setClawPhase('rise'), 1500)
+  window.setTimeout(() => setClawPhase('hold'), 2500)
+  window.setTimeout(() => setClawPhase('release'), 9500)
+  window.setTimeout(() => {
+    clawOverlay.classList.remove('is-active')
+    setClawPhase('idle')
+    clawActive = false
+  }, 10600)
+}
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key
+  clawInput.push(key)
+  if (clawInput.length > clawCode.length) clawInput.shift()
+  if (clawInput.length === clawCode.length && clawInput.every((entry, index) => entry === clawCode[index])) {
+    clawInput = []
+    runClawMachine()
+  }
 })
 
 // --- Resize / render loop ---
