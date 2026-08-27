@@ -229,43 +229,46 @@ rightWall.rotation.y = -Math.PI / 2
 rightWall.position.x = 6
 room.add(rightWall)
 
-const lightPanelMaterial = new THREE.MeshBasicMaterial({ color: 0x8ca9a0, transparent: true, opacity: 0.13 })
-for (const [x, y, width, height] of [[-3.3, 1.4, 0.08, 7], [2.6, 0.7, 0.05, 5], [0, -1.8, 6.5, 0.025]]) {
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(width, height), lightPanelMaterial)
-  panel.position.set(x, y, -5.44)
-  room.add(panel)
+function createGlowTexture() {
+  const glowCanvas = document.createElement('canvas')
+  glowCanvas.width = 128
+  glowCanvas.height = 128
+  const context = glowCanvas.getContext('2d')
+  const gradient = context.createRadialGradient(64, 64, 0, 64, 64, 64)
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
+  gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.4)')
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+  context.fillStyle = gradient
+  context.fillRect(0, 0, 128, 128)
+  return new THREE.CanvasTexture(glowCanvas)
 }
 
-const buildingLineMaterial = new THREE.LineBasicMaterial({ color: 0x020806, transparent: true, opacity: 0.78 })
-const buildings = new THREE.Group()
+const glowTexture = createGlowTexture()
+const splotches = new THREE.Group()
+const splotchColors = [0x8ca9a0, 0x6f9488, 0xd8c088, 0x9ab5c9]
 
-function addBuildingOutline(x, width, height, roofHeight = 0) {
-  const base = -3.48
-  const left = x - width / 2
-  const right = x + width / 2
-  const top = base + height
-  const points = [
-    new THREE.Vector3(left, base, -5.34),
-    new THREE.Vector3(left, top, -5.34),
-    new THREE.Vector3(x, top + roofHeight, -5.34),
-    new THREE.Vector3(right, top, -5.34),
-    new THREE.Vector3(right, base, -5.34),
-  ]
-  buildings.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), buildingLineMaterial))
-  if (roofHeight > 0) {
-    const antenna = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(x, top + roofHeight, -5.34),
-      new THREE.Vector3(x, top + roofHeight + 0.34, -5.34),
-    ])
-    buildings.add(new THREE.Line(antenna, buildingLineMaterial))
-  }
+for (let i = 0; i < 26; i += 1) {
+  const color = splotchColors[Math.floor(Math.random() * splotchColors.length)]
+  const material = new THREE.SpriteMaterial({
+    map: glowTexture,
+    color,
+    transparent: true,
+    opacity: 0.06 + Math.random() * 0.22,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  })
+  const sprite = new THREE.Sprite(material)
+  const scale = 0.25 + Math.random() * 0.85
+  sprite.scale.set(scale, scale, 1)
+  sprite.position.set(
+    THREE.MathUtils.randFloatSpread(11),
+    THREE.MathUtils.randFloat(-3.3, 2.4),
+    -5.3 + Math.random() * 0.3,
+  )
+  splotches.add(sprite)
 }
-
-addBuildingOutline(-4.8, 1.05, 2.2)
-addBuildingOutline(-3.45, 0.78, 3.05, 0.22)
-addBuildingOutline(3.65, 1.15, 2.55)
-addBuildingOutline(5.05, 0.72, 1.75, 0.18)
-room.add(buildings)
+room.add(splotches)
+scene.add(room)
 
 // --- Orb ---
 
@@ -676,6 +679,88 @@ window.addEventListener('keydown', (event) => {
   if (clawInput.length === clawCode.length && clawInput.every((entry, index) => entry === clawCode[index])) {
     clawInput = []
     runClawMachine()
+  }
+})
+
+// --- Gravity collapse easter egg ("TATE") ---
+
+const gravityCode = ['t', 'a', 't', 'e']
+let gravityInput = []
+let gravityTriggered = false
+
+function collapseIntoGravity() {
+  if (gravityTriggered) return
+  gravityTriggered = true
+
+  const bodies = Array.from(document.querySelectorAll('.site-shell *'))
+    .filter((el) => el.children.length === 0 && !el.closest('#claw-overlay'))
+    .map((el) => {
+      const rect = el.getBoundingClientRect()
+      return { el, rect }
+    })
+    .filter(({ rect }) => rect.width > 0 && rect.height > 0)
+    .map(({ el, rect }) => {
+      el.style.position = 'fixed'
+      el.style.left = `${rect.left}px`
+      el.style.top = `${rect.top}px`
+      el.style.width = `${rect.width}px`
+      el.style.height = `${rect.height}px`
+      el.style.margin = '0'
+      el.style.pointerEvents = 'none'
+      el.style.zIndex = '9999'
+      el.style.willChange = 'transform'
+      return {
+        el,
+        startX: rect.left,
+        startY: rect.top,
+        x: rect.left,
+        y: rect.top,
+        height: rect.height,
+        vx: THREE.MathUtils.randFloatSpread(160),
+        vy: -THREE.MathUtils.randFloat(80, 260),
+        rot: 0,
+        rotVel: THREE.MathUtils.randFloatSpread(240),
+        landed: false,
+      }
+    })
+
+  let lastTime = performance.now()
+  function step(now) {
+    const dt = Math.min((now - lastTime) / 1000, 0.05)
+    lastTime = now
+    let stillMoving = false
+    bodies.forEach((body) => {
+      if (body.landed) return
+      stillMoving = true
+      body.vy += 2200 * dt
+      body.x += body.vx * dt
+      body.y += body.vy * dt
+      body.rot += body.rotVel * dt
+      const floor = window.innerHeight - body.height
+      if (body.y >= floor) {
+        body.y = floor
+        body.vy *= -0.22
+        body.vx *= 0.6
+        body.rotVel *= 0.5
+        if (Math.abs(body.vy) < 40) {
+          body.vy = 0
+          body.landed = true
+        }
+      }
+      body.el.style.transform = `translate(${body.x - body.startX}px, ${body.y - body.startY}px) rotate(${body.rot}deg)`
+    })
+    if (stillMoving) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+window.addEventListener('keydown', (event) => {
+  if (gravityTriggered) return
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key
+  gravityInput.push(key)
+  if (gravityInput.length > gravityCode.length) gravityInput.shift()
+  if (gravityInput.length === gravityCode.length && gravityInput.every((entry, index) => entry === gravityCode[index])) {
+    collapseIntoGravity()
   }
 })
 
