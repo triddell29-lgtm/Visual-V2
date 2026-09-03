@@ -150,43 +150,6 @@ h1 {
   color: #fff;
 }
 
-/* Experience control */
-
-.experience-control {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: min(1240px, calc(100% - 44px));
-  margin: 0 auto;
-  padding: 18px 2px 0;
-}
-
-.experience-button {
-  border: 1px solid #c3a96a;
-  padding: 13px 16px;
-  color: #f0d58b;
-  background: #080b0a;
-  font: 10px 'DM Mono', monospace;
-  letter-spacing: 1px;
-  cursor: pointer;
-}
-
-.experience-button:hover:not(:disabled) {
-  color: #111;
-  background: #c3a96a;
-}
-
-.experience-button:disabled {
-  cursor: wait;
-  opacity: .7;
-}
-
-.experience-status {
-  color: #75847b;
-  font: 11px 'DM Mono', monospace;
-  letter-spacing: .4px;
-}
-
 /* Telemetry overlay */
 
 .telemetry {
@@ -579,6 +542,31 @@ h1 {
   font: 14px/1.8 'Manrope', sans-serif;
 }
 
+.build-reflection {
+  display: grid;
+  gap: 4px 20px;
+  max-width: 760px;
+  margin: 27px 0 0;
+}
+
+.build-reflection dt {
+  margin-top: 18px;
+  color: #c4b071;
+  font: 10px 'DM Mono', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.build-reflection dt:first-child {
+  margin-top: 0;
+}
+
+.build-reflection dd {
+  margin: 6px 0 0;
+  color: #9aa89f;
+  font: 14px/1.7 'Manrope', sans-serif;
+}
+
 /* Footer */
 
 .site-footer {
@@ -617,13 +605,6 @@ h1 {
   .fullscreen-toggle {
     right: 14px;
     bottom: 14px;
-  }
-
-  .experience-control {
-    width: calc(100% - 28px);
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 10px;
   }
 
   .seismic-controls {

@@ -10,7 +10,7 @@ document.querySelector('#app').innerHTML = `
     </header>
 
     <section class="page-intro" id="orbital-study">
-      <p>INTERACTIVE SYSTEM / V1</p>
+      <p>INTERACTIVE SYSTEM / V2</p>
       <h1>GROUND<br><em>STATE</em></h1>
       <p class="intro-description">An interactive system translating live earthquake activity into movement and deformation. Two inputs drive it: live seismic data (API or manual override) shapes the ripple, and direct dragging sets the orb's orientation.</p>
       <p class="invitation">The ground is never completely still.</p>
@@ -26,11 +26,6 @@ document.querySelector('#app').innerHTML = `
         <div class="telemetry-live"><i id="feed-dot"></i><span id="feed-status">CONNECTING</span><span id="feed-updated">--:--:--</span></div>
       </aside>
       <button class="fullscreen-toggle" id="fullscreen-toggle" type="button" aria-label="Enter fullscreen">FULLSCREEN</button>
-    </section>
-
-    <section class="experience-control" aria-live="polite">
-      <button class="experience-button" id="experience-button" type="button">Experience an Earthquake</button>
-      <span class="experience-status" id="experience-status">Use recent earthquakes as they arrive.</span>
     </section>
 
     <section class="seismic-controls" aria-label="Seismic input source">
@@ -52,8 +47,9 @@ document.querySelector('#app').innerHTML = `
         <h2>System behavior</h2>
         <ol>
           <li>Two inputs drive the system: seismic input and direct interaction.</li>
-          <li>Seismic input (API or manual) sets ripple depth and speed; recent, stronger activity ripples deeper and faster.</li>
+          <li>Seismic input (API or manual) sets ripple intensity, speed, and sharpness; recent, stronger, and shallower activity ripples deeper, faster, and sharper.</li>
           <li>Interaction (drag) sets the orb's orientation only, never its intensity.</li>
+          <li>Magnitude and depth together resolve into one of four states — DORMANT, MURMUR, TREMOR, RUPTURE — instead of one continuous intensity value.</li>
           <li>The system gradually returns toward a resting state.</li>
         </ol>
       </article>
@@ -83,8 +79,8 @@ document.querySelector('#app').innerHTML = `
 
       <article class="info-block status-info">
         <p class="section-label">04 / SYSTEM STATUS</p>
-        <h2><span class="status-dot"></span><span id="system-status">CALM</span></h2>
-        <p class="note-copy">Seismic input shapes the surface, from either the live API or the manual override above.</p>
+        <h2><span class="status-dot"></span><span id="system-status">DORMANT</span></h2>
+        <p class="note-copy">Magnitude and depth together decide whether the surface reads as DORMANT, MURMUR, TREMOR, or RUPTURE.</p>
       </article>
 
       <article class="info-block reflection">
@@ -99,10 +95,31 @@ document.querySelector('#app').innerHTML = `
         <p class="reflection-copy">A dark field, restrained glow, and reflected light keep the surface feeling physical while seismic motion remains visible.</p>
       </article>
 
+      <article class="info-block reflection">
+        <p class="section-label">07 / V2 REFLECTION &mdash; FOCUS: STATE SHIFT</p>
+        <h2>Two quakes, two different things.</h2>
+        <p class="reflection-copy">For V2 I focused on state shift: making the orb behave like genuinely different things are happening to it, not just moving faster or slower along one dial. The &quot;Experience an Earthquake&quot; button from V1 came out; it was a scripted third input that let me showcase intensity without actually reworking how intensity was produced, and removing it forced the real fix instead of a demo of one. Depth now shapes the ripple's character alongside magnitude: shallow, strong events buckle the surface into a sharp RUPTURE, deep events read as a slow, diffuse MURMUR, and everything between settles into TREMOR or a resting DORMANT state. Manual input still drives a single slider, but I kept its coupling fixed to a shallow, direct value, since a hand pressing on the surface has no depth to speak of &mdash; only live data can produce MURMUR, which makes reaching for the real feed feel worthwhile again. The clearest gain is that two earthquakes of the same magnitude can now look and move differently, which was the entire point of asking whether the system was responding to the world or just visualizing it. What I removed cost me a flashy interaction, but the system reads less like a demo and more like an instrument.</p>
+      </article>
+
+      <article class="info-block reflection">
+        <p class="section-label">08 / END-OF-BUILD REFLECTION</p>
+        <h2>What the cut bought back.</h2>
+        <dl class="build-reflection">
+          <dt>What changed</dt>
+          <dd>Depth now drives a second axis (sharpness) alongside magnitude, and system status resolves into one of four named states &mdash; DORMANT, MURMUR, TREMOR, RUPTURE &mdash; instead of a three-tier CALM / ELEVATED / HIGH TENSION label tied only to intensity.</dd>
+          <dt>What became clearer</dt>
+          <dd>Magnitude alone was never enough. A distant, deep M5 and a shallow M5 are different events, and now they read as different surface behavior instead of the same ripple at the same speed.</dd>
+          <dt>What I removed and why</dt>
+          <dd>The &quot;Experience an Earthquake&quot; scripted playback button. It let me watch a canned sequence of past events without engaging the live feed, functioning as an unofficial third input that also masked the fact that intensity was the only axis worth demoing. Cutting it forced the real depth-based fix and returned the system to exactly two inputs.</dd>
+          <dt>One specific V3 risk</dt>
+          <dd>The four state thresholds are hand-picked from a handful of days of live data. A genuinely large but deep earthquake, or a swarm of small shallow ones, could sit right on a boundary and flicker between states on every 60-second refresh rather than committing to one, which would read as noise instead of a state shift.</dd>
+        </dl>
+      </article>
+
       <article class="info-block chart-block">
         <div class="chart-heading">
           <div>
-            <p class="section-label">07 / SEISMIC SCALE</p>
+            <p class="section-label">09 / SEISMIC SCALE</p>
             <h2>The scale driving the orb</h2>
             <p class="chart-live-note" id="chart-live-note">Driving the orb: --</p>
           </div>
@@ -116,7 +133,7 @@ document.querySelector('#app').innerHTML = `
     </section>
 
     <footer class="site-footer">
-      <span>GROUND STATE / V1</span>
+      <span>GROUND STATE / V2</span>
       <span>BUILT BY TATE / 2026</span>
     </footer>
 
@@ -139,8 +156,6 @@ const stage = document.querySelector('#orb-stage')
 const fullscreenToggle = document.querySelector('#fullscreen-toggle')
 const modeToggle = document.querySelector('#mode-toggle')
 const intensitySlider = document.querySelector('#intensity-slider')
-const experienceButton = document.querySelector('#experience-button')
-const experienceStatus = document.querySelector('#experience-status')
 const eventCount = document.querySelector('#event-count')
 const strongestEvent = document.querySelector('#strongest-event')
 const detailEventCount = document.querySelector('#detail-event-count')
@@ -148,6 +163,7 @@ const detailStrongestEvent = document.querySelector('#detail-strongest-event')
 const latestLocation = document.querySelector('#latest-location')
 const latestDepth = document.querySelector('#latest-depth')
 const systemStatus = document.querySelector('#system-status')
+const statusDot = document.querySelector('.status-dot')
 const quakeChart = document.querySelector('#quake-chart')
 const chartLiveNote = document.querySelector('#chart-live-note')
 const chartAxisItems = document.querySelectorAll('.chart-axis-item')
@@ -177,12 +193,29 @@ function updateDrivingCategory(magnitude, sourceLabel) {
   }
 }
 
+const SEISMIC_STATES = {
+  DORMANT: { label: 'DORMANT', color: '#5f6f68' },
+  MURMUR: { label: 'MURMUR', color: '#8fb8b6' },
+  TREMOR: { label: 'TREMOR', color: '#8fb7a2' },
+  RUPTURE: { label: 'RUPTURE', color: '#e8674f' },
+}
+
+function classifySeismicState(activity, sharpness) {
+  if (activity < 0.12) return 'DORMANT'
+  if (activity > 0.55 && sharpness > 0.55) return 'RUPTURE'
+  if (sharpness < 0.35) return 'MURMUR'
+  return 'TREMOR'
+}
+
+function updateSystemState(activity, sharpness) {
+  const key = classifySeismicState(activity, sharpness)
+  const state = SEISMIC_STATES[key]
+  systemStatus.textContent = state.label
+  if (statusDot) statusDot.style.setProperty('background', state.color)
+  if (statusDot) statusDot.style.setProperty('box-shadow', `0 0 14px ${state.color}`)
+}
+
 let recentEarthquakes = []
-let experienceTimer = null
-let experienceStartedAt = 0
-let experienceEventIndex = 0
-let experienceWasManual = false
-const experienceDuration = 30000
 
 // --- Scene ---
 
@@ -272,7 +305,7 @@ scene.add(room)
 
 // --- Orb ---
 
-const seismic = { intensity: 0.12, speed: 2.4, manual: false }
+const seismic = { intensity: 0.12, speed: 2.4, sharpness: 0.5, manual: false }
 
 function createEarthTexture() {
   const textureCanvas = document.createElement('canvas')
@@ -377,9 +410,11 @@ orbMaterial.onBeforeCompile = (shader) => {
   shader.uniforms.uTime = { value: 0 }
   shader.uniforms.uIntensity = { value: seismic.intensity }
   shader.uniforms.uSpeed = { value: seismic.speed }
+  shader.uniforms.uSharpness = { value: seismic.sharpness }
   shader.vertexShader = `uniform float uTime;
   uniform float uIntensity;
   uniform float uSpeed;
+  uniform float uSharpness;
   ${shader.vertexShader}`
   orbMaterial.userData.shader = shader
   shader.vertexShader = shader.vertexShader.replace(
@@ -389,7 +424,9 @@ orbMaterial.onBeforeCompile = (shader) => {
       float waveA = sin(position.y * 8.0 + position.x * 3.5 + uTime * uSpeed);
       float waveB = sin(position.z * 12.0 - position.y * 4.0 + uTime * uSpeed * 1.7);
       float waveC = sin((position.x + position.z) * 18.0 + uTime * uSpeed * 2.3);
-      float ripple = (waveA * 0.5 + waveB * 0.3 + waveC * 0.2) * uIntensity;
+      float broadWeight = mix(0.7, 0.2, uSharpness);
+      float sharpWeight = mix(0.05, 0.55, uSharpness);
+      float ripple = (waveA * broadWeight + waveB * 0.3 + waveC * sharpWeight) * uIntensity;
       transformed += objectNormal * ripple;
       vec3 rippleGradient = vec3(
         cos(position.y * 8.0 + position.x * 3.5 + uTime * uSpeed) * 1.75 + cos((position.x + position.z) * 18.0 + uTime * uSpeed * 2.3) * 3.6,
@@ -415,15 +452,25 @@ async function readEarthquakes() {
     recentEarthquakes = feed.features
 
     const now = Date.now()
-    const activity = feed.features.reduce((total, feature) => {
+    let activity = 0
+    let weightedSharpnessTotal = 0
+    let weightTotal = 0
+    feed.features.forEach((feature) => {
       const magnitude = Math.max(feature.properties.mag || 0, 0)
       const ageHours = Math.max((now - feature.properties.time) / 3600000, 0)
-      return total + Math.pow(Math.min(magnitude / 6, 1), 2.2) * Math.exp(-ageHours / 18)
-    }, 0)
+      const weight = Math.pow(Math.min(magnitude / 6, 1), 2.2) * Math.exp(-ageHours / 18)
+      activity += weight
+      const depthKm = feature.geometry?.coordinates?.[2] ?? 35
+      const featureSharpness = 1 - THREE.MathUtils.clamp(depthKm / 200, 0, 1)
+      weightedSharpnessTotal += weight * featureSharpness
+      weightTotal += weight
+    })
     const normalizedActivity = THREE.MathUtils.clamp(activity / 4, 0, 1)
+    const weightedSharpness = weightTotal > 0 ? weightedSharpnessTotal / weightTotal : 0.5
     if (!seismic.manual) {
       seismic.intensity = THREE.MathUtils.lerp(0.008, 0.06, normalizedActivity)
       seismic.speed = THREE.MathUtils.lerp(2.5, 10, THREE.MathUtils.clamp(activity / 3, 0, 1))
+      seismic.sharpness = weightedSharpness
     }
 
     const strongestMagnitude = feed.features.reduce(
@@ -448,7 +495,10 @@ async function readEarthquakes() {
         `,
       )
       .join('')
-    if (!seismic.manual) updateDrivingCategory(strongestMagnitude, 'API')
+    if (!seismic.manual) {
+      updateDrivingCategory(strongestMagnitude, 'API')
+      updateSystemState(normalizedActivity, weightedSharpness)
+    }
 
     eventCount.textContent = feed.features.length
     strongestEvent.textContent = `M${strongestMagnitude.toFixed(1)}`
@@ -464,7 +514,6 @@ async function readEarthquakes() {
     latestDepth.textContent = latestFeature?.geometry?.coordinates?.[2]
       ? `${latestFeature.geometry.coordinates[2].toFixed(1)} km`
       : '--'
-    systemStatus.textContent = normalizedActivity > 0.7 ? 'HIGH TENSION' : normalizedActivity > 0.3 ? 'ELEVATED' : 'CALM'
     feedStatus.textContent = 'CONNECTED'
     feedDot.classList.add('is-connected')
     feedUpdated.textContent = new Date().toLocaleTimeString([], { hour12: false })
@@ -543,86 +592,30 @@ canvas.addEventListener('pointercancel', releaseDrag)
 
 // --- Manual / API mode ---
 
+const MANUAL_SHARPNESS = 0.7
+
 modeToggle.addEventListener('click', () => {
-  if (experienceTimer) stopExperience()
   seismic.manual = !seismic.manual
   intensitySlider.disabled = !seismic.manual
   modeToggle.textContent = seismic.manual ? 'MANUAL' : 'API'
   modeToggle.classList.toggle('is-manual', seismic.manual)
   intensitySlider.classList.toggle('is-active', seismic.manual)
-  if (seismic.manual) updateDrivingCategory((Number(intensitySlider.value) / 100) * 7, 'MANUAL')
+  if (seismic.manual) {
+    const value = Number(intensitySlider.value) / 100
+    seismic.sharpness = MANUAL_SHARPNESS
+    updateDrivingCategory(value * 7, 'MANUAL')
+    updateSystemState(value, MANUAL_SHARPNESS)
+  }
   if (!seismic.manual) readEarthquakes()
 })
 intensitySlider.addEventListener('input', (event) => {
   const value = Number(event.target.value) / 100
   seismic.intensity = THREE.MathUtils.lerp(0.008, 0.16, value)
   seismic.speed = THREE.MathUtils.lerp(2.5, 14, value)
+  seismic.sharpness = MANUAL_SHARPNESS
   updateDrivingCategory(value * 7, 'MANUAL')
+  updateSystemState(value, MANUAL_SHARPNESS)
 })
-
-// --- "Experience an Earthquake" playback ---
-
-function showExperienceEvent(feature) {
-  const magnitude = Math.max(feature.properties.mag || 0, 0)
-  const severity = THREE.MathUtils.clamp(magnitude / 7, 0, 1)
-  seismic.intensity = THREE.MathUtils.lerp(0.035, 0.19, severity)
-  seismic.speed = THREE.MathUtils.lerp(5, 18, severity)
-  intensitySlider.value = Math.round(severity * 100)
-  strongestEvent.textContent = `M${magnitude.toFixed(1)}`
-  experienceStatus.textContent = `${feature.properties.place || 'Recent event'} / M${magnitude.toFixed(1)}`
-  updateDrivingCategory(magnitude, 'EXPERIENCE PLAYBACK')
-}
-
-function stopExperience() {
-  window.clearInterval(experienceTimer)
-  experienceTimer = null
-  seismic.manual = experienceWasManual
-  intensitySlider.disabled = !seismic.manual
-  intensitySlider.classList.toggle('is-active', seismic.manual)
-  modeToggle.textContent = seismic.manual ? 'MANUAL' : 'API'
-  modeToggle.classList.toggle('is-manual', seismic.manual)
-  experienceButton.disabled = false
-  experienceButton.textContent = 'Experience an Earthquake'
-  experienceStatus.textContent = 'Use recent earthquakes as they arrive.'
-  intensitySlider.value = 35
-  if (seismic.manual) updateDrivingCategory((35 / 100) * 7, 'MANUAL')
-  if (!seismic.manual) readEarthquakes()
-}
-
-async function startExperience() {
-  if (experienceTimer) return
-  if (!recentEarthquakes.length) await readEarthquakes()
-  const events = recentEarthquakes
-    .filter((feature) => feature.properties?.time)
-    .sort((first, second) => second.properties.time - first.properties.time)
-  if (!events.length) {
-    experienceStatus.textContent = 'Recent earthquake data is unavailable.'
-    return
-  }
-
-  experienceWasManual = seismic.manual
-  seismic.manual = true
-  intensitySlider.disabled = false
-  intensitySlider.classList.add('is-active')
-  modeToggle.textContent = 'MANUAL'
-  modeToggle.classList.add('is-manual')
-  experienceButton.disabled = true
-  experienceStartedAt = performance.now()
-  experienceEventIndex = 0
-  showExperienceEvent(events[experienceEventIndex])
-  experienceButton.textContent = 'Experiencing... 30s'
-  experienceTimer = window.setInterval(() => {
-    const elapsed = performance.now() - experienceStartedAt
-    if (elapsed >= experienceDuration) {
-      stopExperience()
-      return
-    }
-    experienceEventIndex = (experienceEventIndex + 1) % events.length
-    showExperienceEvent(events[experienceEventIndex])
-    experienceButton.textContent = `Experiencing... ${Math.ceil((experienceDuration - elapsed) / 1000)}s`
-  }, 3000)
-}
-experienceButton.addEventListener('click', startExperience)
 
 // --- Fullscreen ---
 
@@ -786,6 +779,11 @@ function animate(time) {
     orbMaterial.userData.shader.uniforms.uSpeed.value = THREE.MathUtils.lerp(
       orbMaterial.userData.shader.uniforms.uSpeed.value,
       seismic.speed,
+      0.035,
+    )
+    orbMaterial.userData.shader.uniforms.uSharpness.value = THREE.MathUtils.lerp(
+      orbMaterial.userData.shader.uniforms.uSharpness.value,
+      seismic.sharpness,
       0.035,
     )
   }
